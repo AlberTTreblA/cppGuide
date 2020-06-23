@@ -322,7 +322,7 @@ int main(){
 
   主要用于C++中：该关键字跟constant（既C++中的const）是反义词，用来指出即使结构体或者类为const类型，其成员只要被mutable修饰，值仍然可以被修改。该关键字只用在类中或者结构体中，用来修饰单个变量是不被允许的。 
 
-![1](..\cpp_keyword\picture\1.jpg)
+![1](../cpp_keyword/picture/1.jpg)
 
 
 
