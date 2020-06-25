@@ -302,13 +302,13 @@ unix系统线程创建和进程创建类似
 
  **线程的缺点：** 1.调度时, 要保存线程状态，频繁调度, 需要占用大量的机时； 2.程序设计上容易出错（线程同步问题）。
 
-![1592624383264](C:/Users/mycan/AppData/Local/Temp/1592624383264.png)
+![1592624383264](../LinuxOperateSystem/picture/1592624383264.png)
 
  #### 线程的实现方式
 
-![1592624273003](C:/Users/mycan/AppData/Local/Temp/1592624273003.png)
+![1592624273003](../LinuxOperateSystem/picture/1592624273003.png)
 
- ![1592624345119](C:/Users/mycan/AppData/Local/Temp/1592624345119.png)
+ ![1592624345119](../LinuxOperateSystem/picture/1592624345119.png)
 
  
 
@@ -596,7 +596,7 @@ round robin
 
 ![1592715693885](../LinuxOperateSystem/picture/1592715693885.png)
 
-![1592715707604](C:/Users/mycan/AppData/Local/Temp/1592715707604.png)
+![1592715707604](../LinuxOperateSystem/picture/1592715707604.png)
 
 ![1592716078571](../LinuxOperateSystem/picture/1592716078571.png)
 
