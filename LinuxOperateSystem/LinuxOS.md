@@ -592,9 +592,9 @@ round robin
 
 #### 自旋锁
 
-![1592715684115](C:/Users/mycan/AppData/Local/Temp/1592715684115.png)
+![1592715684115](../LinuxOperateSystem/picture/1592715684115.png)
 
-![1592715693885](C:/Users/mycan/AppData/Local/Temp/1592715693885.png)
+![1592715693885](../LinuxOperateSystem/picture/1592715693885.png)
 
 ![1592715707604](C:/Users/mycan/AppData/Local/Temp/1592715707604.png)
 
@@ -649,9 +649,9 @@ round robin
 
 
 
-![1592727069737](C:/Users/mycan/AppData/Local/Temp/1592727069737.png)
+![1592727069737](../LinuxOperateSystem/picture/1592727069737.png)
 
-![1592727111112](C:/Users/mycan/AppData/Local/Temp/1592727111112.png)
+![1592727111112](C:/Users/mycan/Documents/CppGuild/linux操作系统/picture/1592727111112.png)
 
 ![1592727164696](../LinuxOperateSystem/picture/1592727164696.png)
 
