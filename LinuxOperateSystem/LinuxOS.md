@@ -487,7 +487,7 @@ spin_unlock(&list_lock);
 
 　　static_prio=MAX_RT_PRIO +nice+ 20
 
-　　nice值的范围是-20~19，因而静态优先级范围在100~139之间。nice数值越大就使得static_prio越大，最终进程优先级就越低。
+　　nice值的范围是[-20,19]，因而静态优先级范围在[100,139]之间。nice数值越大就使得static_prio越大，最终进程优先级就越低。
 
 　　ps -el 命令执行结果：NI列显示的每个进程的nice值，PRI是进程的优先级（如果是实时进程就是静态优先级，如果是非实时进程，就是动态优先级）　　
 
@@ -645,13 +645,13 @@ round robin
 
 ![1592726923701](../LinuxOperateSystem/picture/1592726923701.png)
 
-![1592726946401](C:/Users/mycan/AppData/Local/Temp/1592726946401.png)
+![1592726946401](../LinuxOperateSystem/picture/1592726946401.png)
 
 
 
 ![1592727069737](../LinuxOperateSystem/picture/1592727069737.png)
 
-![1592727111112](C:/Users/mycan/Documents/CppGuild/linux操作系统/picture/1592727111112.png)
+![1592727111112](../LinuxOperateSystem/picture/1592727111112.png)
 
 ![1592727164696](../LinuxOperateSystem/picture/1592727164696.png)
 
