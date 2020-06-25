@@ -220,7 +220,7 @@ Copy On Write技术**缺点**是什么？
 
 进程状态： 新建、就绪、运行、阻塞、停止。
 
-![1592559274466](C:/Users/mycan/AppData/Local/Temp/1592559274466.png)
+![1592559274466](../LinuxOperateSystem/picture/1592559274466.png)
 
  #### 为什么要使用线程 ？
 
