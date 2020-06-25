@@ -216,11 +216,11 @@ Copy On Write技术**缺点**是什么？
 
 ### linux下的进程状态
 
-![1592632417683](..\linux操作系统\picture\1592632417683.png)
+![1592632417683](../LinuxOperateSystem/picture/1592632417683.png)
 
 进程状态： 新建、就绪、运行、阻塞、停止。
 
-![1592559274466](C:\Users\mycan\AppData\Local\Temp\1592559274466.png)
+![1592559274466](C:/Users/mycan/AppData/Local/Temp/1592559274466.png)
 
  #### 为什么要使用线程 ？
 
@@ -302,13 +302,13 @@ unix系统线程创建和进程创建类似
 
  **线程的缺点：** 1.调度时, 要保存线程状态，频繁调度, 需要占用大量的机时； 2.程序设计上容易出错（线程同步问题）。
 
-![1592624383264](C:\Users\mycan\AppData\Local\Temp\1592624383264.png)
+![1592624383264](C:/Users/mycan/AppData/Local/Temp/1592624383264.png)
 
  #### 线程的实现方式
 
-![1592624273003](C:\Users\mycan\AppData\Local\Temp\1592624273003.png)
+![1592624273003](C:/Users/mycan/AppData/Local/Temp/1592624273003.png)
 
- ![1592624345119](C:\Users\mycan\AppData\Local\Temp\1592624345119.png)
+ ![1592624345119](C:/Users/mycan/AppData/Local/Temp/1592624345119.png)
 
  
 
@@ -373,11 +373,14 @@ TASK_INTERRUPTIBLE；
 
 在现代的 Linux 操作系统中，进程一般都是用调用 schedule() 的方法进入睡眠状态的，下面的代码演示了如何让正在运行的进程进入睡眠状态。
 
-1. `sleeping_task = current;`
-2. `set_current_state(TASK_INTERRUPTIBLE);`
-3. `schedule();`
-4. `func1();`
-5. `/* Rest of the code ... */`
+```C++
+sleeping_task = current;
+set_current_state(TASK_INTERRUPTIBLE);
+schedule();
+func1();
+/* Rest of the code ... */
+
+```
 
 在第一个语句中，程序存储了一份进程结构指针 sleeping_task，current 是一个宏，它指向正在执行的进程结构。set_current_state() 将该进程的状态从执行状态 TASK_RUNNING 变成睡眠状态TASK_INTERRUPTIBLE。 如果 schedule() 是被一个状态为TASK_RUNNING 的进程调度，那么 schedule() 将调度另外一个进程占用 CPU；如果 schedule() 是被一个状态为 TASK_INTERRUPTIBLE 或 TASK_UNINTERRUPTIBLE 的进程调度，那么还有一个附加的步骤将被执行：当前执行的进程在另外一个进程被调度之前会被从运行队列中移出，这将导致正在运行的那个进程进入睡眠，因为 它已经不在运行队列中了。
 
@@ -395,23 +398,27 @@ wake_up_process(sleeping_task);
 
 **A 进程:**
 
-1. `1 spin_lock(&list_lock);`
-2. `2``if(list_empty(&list_head)) {`
-3. `3 spin_unlock(&list_lock);`
-4. `4 set_current_state(TASK_INTERRUPTIBLE);`
-5. `5 schedule();`
-6. `6 spin_lock(&list_lock);`
-7. `7 }`
-8. `8`
-9. `9``/* Rest of the code ... */`
-10. `10 spin_unlock(&list_lock);`
+```c++
+spin_lock(&list_lock);
+if(list_empty(&list_head)) {
+	spin_unlock(&list_lock);
+	set_current_state(TASK_INTERRUPTIBLE);
+	schedule();
+	spin_lock(&list_lock);
+}
+/* Rest of the code ... */
+spin_unlock(&list_lock);
+
+```
 
 **B 进程:**
 
-1. `100 spin_lock(&list_lock);`
-2. `101 list_add_tail(&list_head, new_node);`
-3. `102 spin_unlock(&list_lock);`
-4. `103 wake_up_process(processa_task);`
+```c++
+spin_lock(&list_lock);
+list_add_tail(&list_head, new_node);
+spin_unlock(&list_lock);
+wake_up_process(processa_task);
+```
 
 这里会出现一个问题，假如当 A 进程执行到第 3 行后第 4 行前的时候，B 进程被另外一个处理器调度投入运行。在这个时间片内，B 进程执行完了它所有的指令，因此它试图唤醒 A 进程，而此时的 A 进程还没有进入睡眠，所以唤醒操作无效。在这之后，A 进程继续执行，它会错误地认为这个时候链表仍然是空的，于是将自己的状态设置为 TASK_INTERRUPTIBLE 然后调用 schedule() 进入睡 眠。由于错过了 B 进程唤醒，它将会无限期的睡眠下去，这就是无效唤醒问题，因为即使链表中有数据需要处理，A 进程也还是睡眠了。
 
@@ -422,53 +429,21 @@ wake_up_process(sleeping_task);
 
 **A 进程:**
 
-1. `1 set_current_state(TASK_INTERRUPTIBLE);`
-2. `2 spin_lock(&list_lock);`
-3. `3``if(list_empty(&list_head)) {`
-4. `4 spin_unlock(&list_lock);`
-5. `5 schedule();`
-6. `6 spin_lock(&list_lock);`
-7. `7 }`
-8. `8 set_current_state(TASK_RUNNING);`
-9. `9`
-10. `10``/* Rest of the code ... */`
-11. `11 spin_unlock(&list_lock);`
+```C++
+set_current_state(TASK_INTERRUPTIBLE);
+spin_lock(&list_lock);
+if(list_empty(&list_head)) {
+	spin_unlock(&list_lock);
+	schedule();
+	spin_lock(&list_lock);
+}
+set_current_state(TASK_RUNNING);
+/* Rest of the code ... */
+spin_unlock(&list_lock);
+
+```
 
 可以看到，这段代码在测试条件之前就将当前执行进程状态转设置成 TASK_INTERRUPTIBLE 了，并且在链表不为空的情况下又将自己置为 TASK_RUNNING 状态。这样一来如果 B 进程在 A 进程进程检查了链表为空以后调用 wake_up_process()，那么 A 进程的状态就会自动由原来 TASK_INTERRUPTIBLE变成 TASK_RUNNING，此后即使进程又调用了 schedule()，由于它现在的状态是 TASK_RUNNING，所以仍然不会被从运行队列中移出，因而不会错误的进入睡眠，当然也就避免了无效唤醒问题。
-
-4 Linux 内核的例子
-
-在 Linux 操作系统中，内核的稳定性至关重要，为了避免在 Linux 操作系统内核中出现无效唤醒问题，
-Linux 内核在需要进程睡眠的时候应该使用类似如下的操作：
-
-1. `/* ‘q’是我们希望睡眠的等待队列 */`
-2. `DECLARE_WAITQUEUE(wait,current);`
-3. `add_wait_queue(q, &wait);`
-4. `set_current_state(TASK_INTERRUPTIBLE);`
-5. `/* 或 TASK_INTERRUPTIBLE */`
-6. `while(!condition) /* ‘condition’ 是等待的条件 */`
-7. `schedule();`
-8. `set_current_state(TASK_RUNNING);`
-9. `remove_wait_queue(q, &wait);`
-
-上面的操作，使得进程通过下面的一系列步骤安全地将自己加入到一个等待队列中进行睡眠：首先调用 DECLARE_WAITQUEUE () 创建一个等待队列的项，然后调用 add_wait_queue() 把自己加入到等待队列中，并且将进程的状态设置为TASK_INTERRUPTIBLE 或者 TASK_INTERRUPTIBLE。然后循环检查条件是否为真：如果是的话就没有必要睡眠，如果条件不为真，就调用 schedule()。当进程 检查的条件满足后，进程又将自己设置为 TASK_RUNNING 并调用 remove_wait_queue() 将自己移出等待队列。
-
-从上面可以看到，Linux 的内核代码维护者也是在进程检查条件之前就设置进程的状态为睡眠状态，然后才循环检查条件。如果在进程开始睡眠之前条件就已经达成了，那么循环会退出并用 set_current_state() 将自己的状态设置为就绪，这样同样保证了进程不会存在错误的进入睡眠的倾向，当然也就不会导致出现无效唤醒问题。
-
-下面让我们用 linux 内核中的实例来看看 Linux 内核是如何避免无效睡眠的，这段代码出自 Linux2.6 的内核 (linux-2.6.11/kernel/sched.c: 4254):
-
-1. `4253``/* Wait for kthread_stop */`
-2. `4254 set_current_state(TASK_INTERRUPTIBLE);`
-3. `4255``while (!kthread_should_stop()) {`
-4. `4256 schedule();`
-5. `4257 set_current_state(TASK_INTERRUPTIBLE);`
-6. `4258 }`
-7. `4259 __set_current_state(TASK_RUNNING);`
-8. `4260``return``0;`
-
-上面的这些代码属于迁移服务线程 migration_thread，这个线程不断地检查 kthread_should_stop()，
-
-直 到 kthread_should_stop() 返回 1 它才可以退出循环，也就是说只要 kthread_should_stop() 返回 0 该进程就会一直睡 眠。从代码中我们可以看出，检查 kthread_should_stop() 确实是在进程的状态被置为 TASK_INTERRUPTIBLE 后才开始执行 的。因此，如果在条件检查之后但是在 schedule() 之前有其他进程试图唤醒它，那么该进程的唤醒操作不会失效。
 
 小结
 
@@ -486,7 +461,7 @@ Linux 内核在需要进程睡眠的时候应该使用类似如下的操作：
 
 　　进程提供了两种优先级，一种是普通的进程优先级，第二个是实时优先级。前者适用SCHED_NORMAL调度策略，后者可选SCHED_FIFO或SCHED_RR调度策略。**任何时候，实时进程的优先级都高于普通进程**，实时进程只会被更高级的实时进程抢占，同级实时进程之间是按照FIFO（一次机会做完）或者RR（多次轮转）规则调度的。
 
-![1592644279073](..\linux操作系统\picture\1592644279073.png)
+![1592644279073](../LinuxOperateSystem/picture/1592644279073.png)
 
 ####实时进程的调度
 
@@ -502,9 +477,9 @@ Linux 内核在需要进程睡眠的时候应该使用类似如下的操作：
 
  　　总而言之，对于实时进程，高优先级的进程就是大爷。它执行到没法执行了，才轮到低优先级的进程执行。等级制度相当森严啊。
 
-![1592647436514](..\linux操作系统\picture\1592647436514.png)
+![1592647436514](../LinuxOperateSystem/picture/1592647436514.png)
 
-![1592647529141](..\linux操作系统\picture\1592647529141.png)
+![1592647529141](../LinuxOperateSystem/picture/1592647529141.png)
 
 #### 普通进程的调度
 
@@ -518,9 +493,9 @@ Linux 内核在需要进程睡眠的时候应该使用类似如下的操作：
 
 　　而进程的时间片就是完全依赖 static_prio 定制的，见下图，摘自《深入理解linux内核》，
 
-　　![1592647964305](..\linux操作系统\picture\1592647964305.png)
+　　![1592647964305](../LinuxOperateSystem/picture/1592647964305.png)
 
-![1592648080684](..\linux操作系统\picture\1592648080684.png) 　　
+![1592648080684](../LinuxOperateSystem/picture/1592648080684.png) 　　
 
 我们前面也说了，系统调度时，还会考虑其他因素，因而会计算出一个叫进程动态优先级的东西，根据此来实施调度。因为，不仅要考虑静态优先级，也要考虑进程的属性。例如如果进程属于交互式进程，那么可以适当的调高它的优先级，使得界面反应地更加迅速，从而使用户得到更好的体验。Linux2.6 在这方面有了较大的提高。Linux2.6认为，交互式进程可以从平均睡眠时间这样一个measurement进行判断。进程过去的睡眠时间越多，则越有可能属于交互式进程。则系统调度时，会给该进程更多的奖励（bonus），以便该进程有更多的机会能够执行。奖励（bonus）从0到10不等。
 
@@ -540,11 +515,11 @@ Linux 内核在需要进程睡眠的时候应该使用类似如下的操作：
 
 ### 一般的进程调度算法
 
-![1592649179130](..\linux操作系统\picture\1592649179130.png)
+![1592649179130](../LinuxOperateSystem/picture/1592649179130.png)
 
 
 
-![1592649797846](..\linux操作系统\picture\1592649797846.png)
+![1592649797846](../LinuxOperateSystem/picture/1592649797846.png)
 
 
 
@@ -596,34 +571,34 @@ round robin
 
 ### 为什么要同步
 
-![1592706338117](..\linux操作系统\picture\1592706338117.png)
+![1592706338117](../LinuxOperateSystem/picture/1592706338117.png)
 
 还是竞争条件和临界区问题，几个线程同时访问同一个临界区
 
-![1592706412179](..\linux操作系统\picture\1592706412179.png)
+![1592706412179](../LinuxOperateSystem/picture/1592706412179.png)
 
-![1592706446578](..\linux操作系统\picture\1592706446578.png)
+![1592706446578](../LinuxOperateSystem/picture/1592706446578.png)
 
-![1592706550385](..\linux操作系统\picture\1592706550385.png)
+![1592706550385](../LinuxOperateSystem/picture/1592706550385.png)
 
 ### 同步方法
 
 #### 原子操作
 
 - 原子整数操作：atomic_t类型 和 一些对应的原子操作函数
-- ![1592713010030](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592713010030.png)
+- ![1592713010030](../LinuxOperateSystem/picture/1592713010030.png)
 
 - 像int data++这种操作，无需加锁，直接使用原子操作，加锁开销太大了。
 
 #### 自旋锁
 
-![1592715684115](C:\Users\mycan\AppData\Local\Temp\1592715684115.png)
+![1592715684115](C:/Users/mycan/AppData/Local/Temp/1592715684115.png)
 
-![1592715693885](C:\Users\mycan\AppData\Local\Temp\1592715693885.png)
+![1592715693885](C:/Users/mycan/AppData/Local/Temp/1592715693885.png)
 
-![1592715707604](C:\Users\mycan\AppData\Local\Temp\1592715707604.png)
+![1592715707604](C:/Users/mycan/AppData/Local/Temp/1592715707604.png)
 
-![1592716078571](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592716078571.png)
+![1592716078571](../LinuxOperateSystem/picture/1592716078571.png)
 
 #### 读写自旋锁
 
@@ -633,7 +608,7 @@ round robin
 - 有时把读写锁也叫共享锁和排他锁。
 - 下面这一点很重要。读会延迟写，对读友好，适用读侧重场合
 
-![1592721735888](..\linux操作系统\picture\1592721735888.png)
+![1592721735888](../LinuxOperateSystem/picture/1592721735888.png)
 
 #### 顺序锁
 
@@ -650,35 +625,35 @@ round robin
 
 
 
-![1592725083948](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592725083948.png)
+![1592725083948](../LinuxOperateSystem/picture/1592725083948.png)
 
 **信号量的特点：**
 
-![1592725720566](..\linux操作系统\picture\1592725720566.png)
+![1592725720566](../LinuxOperateSystem/picture/1592725720566.png)
 
-![1592725112553](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592725112553.png)
+![1592725112553](../LinuxOperateSystem/picture/1592725112553.png)
 
 #### 读写信号量
 
-![1592725346236](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592725346236.png)
+![1592725346236](../LinuxOperateSystem/picture/1592725346236.png)
 
-![1592725332409](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592725332409.png)
+![1592725332409](../LinuxOperateSystem/picture/1592725332409.png)
 
 **看到这里我想起了陈硕在他的书中说，尽量不要用读写锁和信号量**，那用什么呢，
 
 #### 互斥体
 
-![1592726923701](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592726923701.png)
+![1592726923701](../LinuxOperateSystem/picture/1592726923701.png)
 
-![1592726946401](C:\Users\mycan\AppData\Local\Temp\1592726946401.png)
+![1592726946401](C:/Users/mycan/AppData/Local/Temp/1592726946401.png)
 
 
 
-![1592727069737](C:\Users\mycan\AppData\Local\Temp\1592727069737.png)
+![1592727069737](C:/Users/mycan/AppData/Local/Temp/1592727069737.png)
 
-![1592727111112](C:\Users\mycan\AppData\Local\Temp\1592727111112.png)
+![1592727111112](C:/Users/mycan/AppData/Local/Temp/1592727111112.png)
 
-![1592727164696](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592727164696.png)
+![1592727164696](../LinuxOperateSystem/picture/1592727164696.png)
 
 #### 禁止抢占
 
@@ -686,7 +661,7 @@ round robin
 
 可以通过`preempt_disable()`禁止内核抢占。直到`preempt_enable()`被启用之后才能重新启用。
 
-![1592727269579](C:\Users\mycan\Documents\CppGuild\linux操作系统\picture\1592727269579.png)
+![1592727269579](../LinuxOperateSystem/picture/1592727269579.png)
 
 ### 锁的缺点
 
